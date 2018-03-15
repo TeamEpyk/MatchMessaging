@@ -7,6 +7,9 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="LoginStyle.css">
+    <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-auth.js"></script>
+    <script src="Register.js"></script>
 
     <title>Login</title>
   </head>
@@ -16,7 +19,7 @@
       <h1>Register</h1>
       <br>
       <div class="Username">
-      <label for="email"><b>Password</b></label>
+      <label for="email"><b>Email</b></label>
       <input type="email" class="form-control" id="email" placeholder="Email">
       <br>
       <label for="Username"><b>Username</b></label>
@@ -26,7 +29,7 @@
       <input type="password" class="form-control" id="pass" placeholder="Password">
       <br>
       <label for="pass"><b>Confirm Password</b></label>
-      <input type="password" class="form-control" id="pass" placeholder="Confirm Password">
+      <input type="password" class="form-control" id="passconfirm" placeholder="Confirm Password">
       <br>
       <p><b>Interests</b></p>
       <button type="button" class="btn btn-light" data-toggle="button">Gardening</button>
@@ -48,7 +51,7 @@
       <button type="button" class="btn btn-light" data-toggle="button">Indoor sports</button>
       <br>
       <br>
-      <a href="./Chat.html" class="btn btn-light">Register</a>
+      <a id="register" class="btn btn-light">Register</a>
       <p></p>
     </div>
   </div>
