@@ -1,0 +1,24 @@
+html, body {
+  height:100%;
+}
+body {
+  background-color: navy;
+  display:flex;
+  align-items:center;
+  color: white;
+}
+#layer1 {
+  background-color: skyblue;
+  padding: 10px;
+  color: white;
+  text-align: center;
+}
+#layer2 {
+  background-color: white;
+  padding: 10px;
+  color: white;
+  text-align: center;
+}
+#username {
+  top: 5%;
+}
