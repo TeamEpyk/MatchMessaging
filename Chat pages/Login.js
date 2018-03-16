@@ -7,72 +7,61 @@ document.addEventListener("DOMContentLoaded", function(event) {
     };
     firebase.initializeApp(config);
 
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+    }).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+    });
+
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            console.log("User is signed in.");
+            window.location = "Profile.html";
+        } else {
+            console.log("No user is signed in.");
+        }
+    });
+
     $("#google").click(function(){
-        let provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(provider).then(function(result) {
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            let token = result.credential.accessToken;
-            // The signed-in user info.
-            let user = result.user;
-            console.log(user);
-            window.location = "success.html";
-            // ...
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+            let provider = new firebase.auth.GoogleAuthProvider();
+            return firebase.auth().signInWithPopup(provider).then(function(){
+                    window.location = "Profile.html";
+            });
         }).catch(function(error) {
             // Handle Errors here.
-            let errorCode = error.code;
-            let errorMessage = error.message;
-            // The email of the user's account used.
-            let email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            let credential = error.credential;
+            var errorCode = error.code;
+            var errorMessage = error.message;
             console.log(error);
-            // ...
         });
     });
 
     $("#facebook").click(function(){
-        let provider = new firebase.auth.FacebookAuthProvider();
-        firebase.auth().signInWithPopup(provider).then(function(result) {
-            // This gives you a Facebook Access Token. You can use it to access the Facebook API.
-            var token = result.credential.accessToken;
-            // The signed-in user info.
-            var user = result.user;
-            console.log(user);
-            window.location = "success.html";
-            // ...
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+            let provider = new firebase.auth.FacebookAuthProvider();
+            return firebase.auth().signInWithPopup(provider).then(function(){
+                    window.location = "Profile.html";
+            });
         }).catch(function(error) {
             // Handle Errors here.
             var errorCode = error.code;
             var errorMessage = error.message;
-            // The email of the user's account used.
-            var email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            var credential = error.credential;
             console.log(error);
-            // ...
         });
     });
 
     $("#github").click(function(){
-        var provider = new firebase.auth.GithubAuthProvider();
-        firebase.auth().signInWithPopup(provider).then(function(result) {
-            // This gives you a Facebook Access Token. You can use it to access the Github API.
-            var token = result.credential.accessToken;
-            // The signed-in user info.
-            var user = result.user;
-            console.log(user);
-            window.location = "success.html";
-            // ...
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+            var provider = new firebase.auth.GithubAuthProvider();
+            return firebase.auth().signInWithPopup(provider).then(function(){
+                    window.location = "Profile.html";
+            });
         }).catch(function(error) {
             // Handle Errors here.
             var errorCode = error.code;
             var errorMessage = error.message;
-            // The email of the user's account used.
-            var email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            var credential = error.credential;
             console.log(error);
-            // ...
         });
     });
  });
