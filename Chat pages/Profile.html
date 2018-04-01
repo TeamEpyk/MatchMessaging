@@ -7,6 +7,14 @@
 <body>
     <image id="profilepic" width="168" heigh="168"/>
     <h2 id="displayname"></h2>
+    <form name="friendform" action="/add_friend" method="post">
+        <input type="hidden" value="" name="uid1" id="uid1"/>
+        <input type="hidden" value="" name="uid2" id="uid2"/>
+        <input id="add" type="submit" value="Add Friend"/>
+    </form>
+    <table border="1" id="notifications">
+    </table>
+    <br/>
     <button id="logout">Logout</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>

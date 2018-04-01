@@ -10,10 +10,44 @@ document.addEventListener("DOMContentLoaded", function(event) {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("User is signed in.");
+            if (window.location.pathname.substring(6)==user.uid){
+                $("#add").hide();
+                $.post('/get_notifications',
+                    {
+                        "uid": user.uid
+                    }
+                ).done(function (data) {
+                    $("#notifications").html(data);
+                }).fail(function(data){
+                });
+            } else {
+                $.post('/friend_status',
+                    {
+                        "uid1": user.uid,
+                        "uid2": window.location.pathname.substring(6)
+                    }
+                ).done(function (data) {
+                    if (data=='friend'){
+                        $("#add").hide();
+                    } else if (data=='nofriend'){
+                        $("#uid1").val(user.uid);
+                        $("#uid2").val(window.location.pathname.substring(6));
+                    } else if (data=='pending'){
+                        $("#add").prop('disabled', true);
+                        $("#add").val("Pending");
+                    }
+                }).fail(function(data){
+                    $("#add").hide();
+                });
+            }
         } else {
             console.log("No user is signed in.");
             window.location = "Login.html";
         }
+    });
+
+    $("#add").click(function(){
+
     });
 
     $("#logout").click(function(){

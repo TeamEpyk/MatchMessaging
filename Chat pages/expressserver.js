@@ -43,7 +43,7 @@ app.post('/user_login', function(req, res){
         var insert = `INSERT INTO users SET ?`;
         conn.query(insert, user, function(err, rows, fields) {
             if (err) {
-                console.log(err);
+                //console.log(err);
             } else {
                 console.log(`Successfully added ${user.uid} (${user.displayName}) to database.`);
             }
@@ -91,9 +91,13 @@ app.post('/Search.html', function(req, res){
                         } else {
                             searchPage = data;
                             let results = "";
-                            for (let i = 0; i<rows.length; i++){
-                                let r = rows[i];
-                                results += `<tr><td><a href="/user/${r.uid}"><img width="168" height="168" src=${r.photoURL} alt="Profile Picture"/></a></td><td><a href="/user/${r.uid}">${r.displayName}</a></td></tr>`;
+                            if (rows.length == 0){
+                                results = "No results";
+                            } else {
+                                for (let i = 0; i<rows.length; i++){
+                                    let r = rows[i];
+                                    results += `<tr><td><a href="/user/${r.uid}"><img width="168" height="168" src=${r.photoURL} alt="Profile Picture"/></a></td><td><a href="/user/${r.uid}">${r.displayName}</a></td></tr>`;
+                                }
                             }
                             let find = '<table id="results">';
                             let index = searchPage.indexOf(find);
@@ -107,6 +111,195 @@ app.post('/Search.html', function(req, res){
                             }
                         }
                     });
+                }
+            });
+        }
+    });
+});
+
+app.post('/add_friend', function(req, res){
+    let u1 = req.sanitize('uid1').escape().trim();
+    let u2 = req.sanitize('uid2').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        } else {
+            conn.query(`SELECT * FROM friends WHERE (uid1="${u1}" or uid2="${u1}") and (uid1="${u2}" or uid2="${u2}")`, function(err4, rows4, fields4){
+                if (err4){
+                    console.log(err4);
+                } else {
+                    if (rows4.length>0){ //This should never happen
+                        if (rows4[0].pending==1 || rows4[0].pending==2){
+                            res.send("Friend request pending.");
+                        } else {
+                            res.send("You are already friends with this user.")
+                        }
+                    } else {
+                        items = {
+                            uid1: u1,
+                            uid2: u2
+                        }
+                        conn.query(`INSERT INTO friends SET ?`, items, function(err, rows, fields){
+                            if (err){
+                                console.log(err);
+                                res.send("Something went wrong...");
+                            } else {
+                                conn.query(`SELECT * FROM users WHERE uid="${u1}"`, function(err1, rows1, fields1){
+                                    if (err1){
+                                        console.log(err1);
+                                        res.send("Something went wrong...");
+                                    } else {
+                                        let name = rows1[0].displayName;
+                                        items = {
+                                            otherId: rows.insertId,
+                                            uid: u2,
+                                            message: `${name} has requested to be your friend!`
+                                        }
+                                        conn.query(`INSERT INTO notifications SET ?`, items, function(err2, rows2, fields2){
+                                            if (err2){
+                                                console.log(err2);
+                                                res.send("Something went wrong...");
+                                            } else {
+                                                fs.readFile("Redirect.html", "utf8", function (err3, data){
+                                                    res.send(data.replace("REPLACE_ME", `/user/${u2}`));
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    });
+});
+
+app.post('/confirm_friend', function(req, res){
+    let fid = req.sanitize('secret1').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        } else {
+            let result = {
+                friends: [],
+                messages: []
+            };
+            conn.query(`UPDATE friends SET pending=0 WHERE id="${fid}"`, function(err, rows, fields){
+                conn.query(`SELECT * FROM friends WHERE id=${fid}`, function(err1, rows1, fields1){
+                    conn.query(`DELETE FROM notifications WHERE otherId=${fid}`, function(err2, rows2, fields2){
+                        conn.query(`SELECT * FROM users WHERE uid="${rows1[0].uid1}"`, function(err4, rows4, fields4){
+                            items = {
+                                uid: rows4[0].uid,
+                                message: `${rows4[0].displayName} has accepted your friend request!`
+                            }
+                            conn.query(`INSERT INTO notifications SET ?`, items, function(err3, rows3, fields3){
+                                fs.readFile("Redirect.html", "utf8", function (err3, data){
+                                    res.send(data.replace("REPLACE_ME", `/user/${items.uid}`));
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        }
+    });
+});
+
+app.post('/decline_friend', function(req, res){
+    let fid = req.sanitize('secret1').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        } else {
+            let result = {
+                friends: [],
+                messages: []
+            };
+            conn.query(`UPDATE friends SET pending=2 WHERE id="${fid}"`, function(err, rows, fields){
+                conn.query(`SELECT * FROM friends WHERE id=${fid}`, function(err1, rows1, fields1){
+                    conn.query(`DELETE FROM notifications WHERE otherId=${fid}`, function(err2, rows2, fields2){
+                        conn.query(`SELECT * FROM users WHERE uid="${rows1[0].uid1}"`, function(err4, rows4, fields4){
+                            items = {
+                                uid: rows4[0].uid
+                            }
+                            fs.readFile("Redirect.html", "utf8", function (err3, data){
+                                res.send(data.replace("REPLACE_ME", `/user/${items.uid}`));
+                            });
+                        });
+                    });
+                });
+            });
+        }
+    });
+});
+
+app.post('/get_notifications', function(req, res){
+    let uid = req.sanitize('uid').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        } else {
+            let result = {
+                friends: [],
+                messages: []
+            };
+            conn.query(`SELECT DISTINCT * FROM friends RIGHT JOIN (SELECT * from notifications WHERE notifications.uid="${uid}") as n ON friends.id=n.otherId`, function(err, rows, fields){
+                result.friends.push(rows);
+                let html = "";
+                let template = "";
+                fs.readFile("TableRow.html", "utf8", function (err, data){
+                    template = data;
+                    //Friends
+                    html += `<tr><th>Friend Requests</th></tr>`;
+                    if (result.friends[0].length==0){
+                        html += `<tr><td>Nothing to see here :(</td></tr>`;
+                    } else {
+                        for (let i = 0; i<result.friends[0].length; i++){
+                            html += template.replace('MESSAGE_REPLACE', result.friends[0][i].message)
+                                .replace('ACTION_REPLACE', 'confirm_friend')
+                                .replace('ACTION_REPLACE2', 'decline_friend')
+                                .replace('ID_REPLACE', result.friends[0][i].otherId)
+                                .replace('ID_REPLACE', result.friends[0][i].otherId)
+                                .replace('USER_REPLACE', `/user/${result.friends[0][i].uid1}`);
+                        }
+                    }
+                    res.send(html);
+                });
+            });
+            /*This one might be more complicated bleh
+            conn.query(`SELECT * FROM notifications,messages WHERE notifications.uid="${uid}" AND friends.id=notifications.otherId`, function(err, rows, fields){
+                result.friends.push(rows);
+            });
+            */
+
+        }
+    });
+});
+
+app.post('/friend_status', function(req, res){
+    let u1 = req.sanitize('uid1').escape().trim();
+    let u2 = req.sanitize('uid2').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+            res.send('error');
+        } else {
+            conn.query(`SELECT * FROM friends WHERE (uid1="${u1}" or uid2="${u1}") and (uid1="${u2}" or uid2="${u2}")`, function(err, rows, fields){
+                if (err){
+                    console.log(err);
+                    res.send('error');
+                } else {
+                    if (rows.length==0){
+                        res.send('nofriend');
+                    } else {
+                        if (rows[0].pending==1||rows[0].pending=2){
+                            res.send('pending');
+                        } else {
+                            res.send('friend');
+                        }
+                    }
                 }
             });
         }
@@ -128,32 +321,36 @@ app.get(/^\/user(.+)$/, function(req, res){
                         res.redirect("*");
                     } else {
                         let profilePage = "";
-                        fs.readFile("Profile.html", "utf8", function (err, data){
-                            if (err){
-                                console.log("Wtf?");
-                                res.redirect("*");
-                            } else {
-                                profilePage = data;
-                                let find1 = '<image id="profilepic"';
-                                let index1 = profilePage.indexOf(find1);
-                                if (index1 < 0){
-                                    //Handle Error
+                        if (rows.length==0){
+                            res.send("User not found");
+                        } else {
+                            fs.readFile("Profile.html", "utf8", function (err, data){
+                                if (err){
+                                    console.log("Wtf?");
+                                    res.redirect("*");
                                 } else {
-                                    index1 += find1.length;
-                                    profilePage = profilePage.substring(0, index1) + `src="${rows[0].photoURL}"` + profilePage.substring(index1);
+                                    profilePage = data;
+                                    let find1 = '<image id="profilepic"';
+                                    let index1 = profilePage.indexOf(find1);
+                                    if (index1 < 0){
+                                        //Handle Error
+                                    } else {
+                                        index1 += find1.length;
+                                        profilePage = profilePage.substring(0, index1) + `src="${rows[0].photoURL}"` + profilePage.substring(index1);
+                                    }
+                                    let find2 = '<h2 id="displayname">';
+                                    let index2 = profilePage.indexOf(find2);
+                                    if (index2<0){
+                                        //Handle Error
+                                    } else {
+                                        index2 += find2.length;
+                                        profilePage = profilePage.substring(0, index2) + `${rows[0].displayName}` + profilePage.substring(index2);
+                                    }
+                                    res.set('Content-Type', 'text/html');
+                                    res.send(profilePage);
                                 }
-                                let find2 = '<h2 id="displayname">';
-                                let index2 = profilePage.indexOf(find2);
-                                if (index2<0){
-                                    //Handle Error
-                                } else {
-                                    index2 += find2.length;
-                                    profilePage = profilePage.substring(0, index2) + `${rows[0].displayName}` + profilePage.substring(index2);
-                                }
-                                res.set('Content-Type', 'text/html');
-                                res.send(profilePage);
-                            }
-                        });
+                            });
+                        }
                     }
                 });
             }
