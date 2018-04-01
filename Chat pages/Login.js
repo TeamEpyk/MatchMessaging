@@ -17,17 +17,33 @@ document.addEventListener("DOMContentLoaded", function(event) {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("User is signed in.");
-            window.location = "Profile.html";
+            var u = firebase.auth().currentUser;
+            $.post('/user_login',
+                {
+                    "uid": u.uid,
+                    "displayName": u.displayName,
+                    "photoURL": u.photoURL
+                }
+            ).done(function (data) {
+                window.location = data;
+            }).fail(function(data){
+                //Something else
+            });
         } else {
             console.log("No user is signed in.");
         }
     });
 
-    $("#google").click(function(){
+    $("#emailpass").click(function(){
+        var em = $("#email").val();
+        let pw = $("#pass").val();
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
-            let provider = new firebase.auth.GoogleAuthProvider();
-            return firebase.auth().signInWithPopup(provider).then(function(){
-                    window.location = "Profile.html";
+            return firebase.auth().signInWithEmailAndPassword(em, pw).then(function(){
+            }).catch(function(error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                // ...
             });
         }).catch(function(error) {
             // Handle Errors here.
@@ -35,13 +51,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var errorMessage = error.message;
             console.log(error);
         });
-    });
+    })
 
-    $("#facebook").click(function(){
+    $("#google").click(function(){
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
-            let provider = new firebase.auth.FacebookAuthProvider();
+            let provider = new firebase.auth.GoogleAuthProvider();
             return firebase.auth().signInWithPopup(provider).then(function(){
-                    window.location = "Profile.html";
             });
         }).catch(function(error) {
             // Handle Errors here.
@@ -55,7 +70,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
             var provider = new firebase.auth.GithubAuthProvider();
             return firebase.auth().signInWithPopup(provider).then(function(){
-                    window.location = "Profile.html";
             });
         }).catch(function(error) {
             // Handle Errors here.

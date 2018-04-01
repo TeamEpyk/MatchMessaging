@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-auth.js"></script>
+        <script src="Search.js"></script>
+
+        <title>Search</title>
+    </head>
+    <body style="margin:10%;">
+        <form name="searchForm" action="/Search.html" onsubmit="return validateSearch()" method="post">
+            <label for="search"><b>Search</b></label>
+            <input type="text" class="form-control" id="search" name="query" placeholder="Username"/>
+            <input type="hidden" value="" name="uid" id="uid"/>
+            <br/>
+            <input type="submit" value="Search"/>
+        </form>
+        <br/>
+        <table id="results">
+        </table>
+    </body>
+</html>
