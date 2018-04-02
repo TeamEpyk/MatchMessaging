@@ -46,10 +46,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     });
 
-    $("#add").click(function(){
-
-    });
-
     $("#logout").click(function(){
         logout();
     });
@@ -61,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 "uid": u.uid
             }
         ).done(function (data) {
-            //window.location = "Login.html";
+            window.location = data;
         }).fail(function(data){
             //Something else
         });

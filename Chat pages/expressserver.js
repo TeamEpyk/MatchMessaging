@@ -21,13 +21,85 @@ app.use(bodyParser.json())
 app.use(expressValidator())
 
 app.get('/', function (req, res) {
-    var url = "/Login.html";
+    var url = "/Index.html";
     res.sendFile( __dirname + url);
 })
 
 app.post('/Chat.html', function(req, res){
-    console.log(req.body);
-    res.sendFile( __dirname + "/Chat.html");
+    let u1 = req.sanitize('uid1').escape().trim();
+    let u2 = req.sanitize('uid2').escape().trim();
+    fs.readFile("Chat.html", "utf8", function (err, data){
+        let replace = data.replace('REPLACE_UID_ME', u1)
+            .replace('REPLACE_UID_FR', u2);
+            res.send(replace);
+    });
+});
+
+app.post('/send_message', function(req, res){
+    let s = req.sanitize('sender').escape().trim();
+    let r = req.sanitize('receiver').escape().trim();
+    let m = req.sanitize('message').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        }
+        let info = {
+            senderid: s,
+            receiverid: r,
+            message: m
+        }
+        let insert = `INSERT INTO messages SET ?`;
+        conn.query(insert, info, function(err, rows, fields) {
+            if (err) {
+                res.send('failure');
+            } else {
+                res.send('success');
+            }
+        });
+    });
+});
+
+app.post('/get_messages', function(req, res){
+    let u1 = req.sanitize('u1').escape().trim();
+    let u2 = req.sanitize('u2').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        }
+        conn.query(`SELECT * FROM messages WHERE (senderid="${u1}" AND receiverid="${u2}") OR (senderid="${u2}" AND receiverid="${u1}") ORDER BY time LIMIT 100`, function(err, rows, fields) {
+            fs.readFile("Message.html", "utf8", function (err, data){
+                console.log(rows, u2);
+                let results = '';
+                for (let i = 0; i<rows.length; i++){
+                    let cl = 'ms sentme';
+                    if (rows[i].senderid==u2) cl='ms sentfr';
+                    results += `<span class="${cl}">${rows[i].message}</span><br/>`
+                }
+                if (results=='') results = 'Nothing here yet!';
+                res.send(results);
+            });
+        });
+    });
+});
+
+app.post('/get_online_friends', function(req, res){
+    let uid = req.sanitize('u1').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        }
+        conn.query(`SELECT DISTINCT * FROM users WHERE uid IN (SELECT uid2 FROM friends WHERE uid1="${uid}" UNION SELECT uid1 FROM friends WHERE uid2="${uid}") and uid!="${uid}"`, function(err, rows, fields){
+            fs.readFile("Message.html", "utf8", function (err, data){
+                let results = '';
+                for (let i = 0; i<rows.length; i++){
+                    let cl = 'us sentfr';
+                    results += `<span style="overflow-x:scroll" class="${cl}">${rows[i].displayName}</span><br/>`
+                }
+                if (results=='') results = 'Nothing here yet!';
+                res.send(results);
+            });
+        });
+    });
 });
 
 app.post('/user_login', function(req, res){
@@ -51,7 +123,7 @@ app.post('/user_login', function(req, res){
         conn.query(`UPDATE users SET online=NOW() WHERE uid='${user.uid}'`, function(err, rows, fields){
             console.log(`User ${user.uid} now online.`);
         });
-        res.send(`/user/${user.uid}`);
+        res.send(`/Index.html`);
     })
 });
 
@@ -66,7 +138,7 @@ app.post('/user_logout', function(req, res){
         conn.query(`UPDATE users SET online=NOW() WHERE uid='${user.uid}'`, function(err, rows, fields){
             console.log(`User ${user.uid} now offline.`);
         });
-        res.sendFile( __dirname + "/Login.html");
+        res.send("/Index.html");
     })
 });
 
@@ -124,6 +196,9 @@ app.post('/add_friend', function(req, res){
         if (error){
             console.log(error);
         } else {
+            conn.query(`UPDATE users SET online=NOW() WHERE uid='${u1}'`, function(err, rows, fields){
+                //Update last active
+            });
             conn.query(`SELECT * FROM friends WHERE (uid1="${u1}" or uid2="${u1}") and (uid1="${u2}" or uid2="${u2}")`, function(err4, rows4, fields4){
                 if (err4){
                     console.log(err4);
@@ -150,10 +225,12 @@ app.post('/add_friend', function(req, res){
                                         res.send("Something went wrong...");
                                     } else {
                                         let name = rows1[0].displayName;
+                                        //type 1 for friend request
                                         items = {
                                             otherId: rows.insertId,
                                             uid: u2,
-                                            message: `${name} has requested to be your friend!`
+                                            message: `${name} has requested to be your friend!`,
+                                            type: 1
                                         }
                                         conn.query(`INSERT INTO notifications SET ?`, items, function(err2, rows2, fields2){
                                             if (err2){
@@ -188,11 +265,13 @@ app.post('/confirm_friend', function(req, res){
             };
             conn.query(`UPDATE friends SET pending=0 WHERE id="${fid}"`, function(err, rows, fields){
                 conn.query(`SELECT * FROM friends WHERE id=${fid}`, function(err1, rows1, fields1){
-                    conn.query(`DELETE FROM notifications WHERE otherId=${fid}`, function(err2, rows2, fields2){
+                    conn.query(`DELETE FROM notifications WHERE type=1 and otherId=${fid}`, function(err2, rows2, fields2){
                         conn.query(`SELECT * FROM users WHERE uid="${rows1[0].uid1}"`, function(err4, rows4, fields4){
+                            //type 2 for accepted friend request
                             items = {
                                 uid: rows4[0].uid,
-                                message: `${rows4[0].displayName} has accepted your friend request!`
+                                message: `${rows4[0].displayName} has accepted your friend request!`,
+                                type:2
                             }
                             conn.query(`INSERT INTO notifications SET ?`, items, function(err3, rows3, fields3){
                                 fs.readFile("Redirect.html", "utf8", function (err3, data){
@@ -219,7 +298,7 @@ app.post('/decline_friend', function(req, res){
             };
             conn.query(`UPDATE friends SET pending=2 WHERE id="${fid}"`, function(err, rows, fields){
                 conn.query(`SELECT * FROM friends WHERE id=${fid}`, function(err1, rows1, fields1){
-                    conn.query(`DELETE FROM notifications WHERE otherId=${fid}`, function(err2, rows2, fields2){
+                    conn.query(`DELETE FROM notifications WHERE type=1 and otherId=${fid}`, function(err2, rows2, fields2){
                         conn.query(`SELECT * FROM users WHERE uid="${rows1[0].uid1}"`, function(err4, rows4, fields4){
                             items = {
                                 uid: rows4[0].uid
@@ -245,11 +324,11 @@ app.post('/get_notifications', function(req, res){
                 friends: [],
                 messages: []
             };
-            conn.query(`SELECT DISTINCT * FROM friends RIGHT JOIN (SELECT * from notifications WHERE notifications.uid="${uid}") as n ON friends.id=n.otherId`, function(err, rows, fields){
+            conn.query(`SELECT DISTINCT * FROM friends RIGHT JOIN (SELECT * from notifications WHERE type=1 and notifications.uid="${uid}" ) as n ON friends.id=n.otherId`, function(err, rows, fields){
                 result.friends.push(rows);
                 let html = "";
                 let template = "";
-                fs.readFile("TableRow.html", "utf8", function (err, data){
+                fs.readFile("FriendAction.html", "utf8", function (err, data){
                     template = data;
                     //Friends
                     html += `<tr><th>Friend Requests</th></tr>`;
@@ -294,12 +373,52 @@ app.post('/friend_status', function(req, res){
                     if (rows.length==0){
                         res.send('nofriend');
                     } else {
-                        if (rows[0].pending==1||rows[0].pending=2){
+                        /*
+                        1 means friend request send and pending
+                        2 means friend request declined
+                        3 means matched but not friends
+                        0 means friends
+                        */
+                        if (rows[0].pending==3){
+                            res.send('nofriend');
+                        } else if (rows[0].pending==1||rows[0].pending==2){
                             res.send('pending');
-                        } else {
+                        } else if (rows[0].pending==0) {
                             res.send('friend');
                         }
                     }
+                }
+            });
+        }
+    });
+});
+
+app.post('/get_match', function(req, res){
+    let uid = req.sanitize('uid').escape().trim();
+    req.getConnection(function(error, conn) {
+        if (error){
+            console.log(error);
+        } else {
+            conn.query(`UPDATE users SET online=NOW() WHERE uid='${uid}'`, function(err, rows, fields){
+                //Update last active
+            });
+            conn.query(`SELECT DISTINCT * FROM users WHERE uid NOT IN (SELECT uid2 FROM friends WHERE uid1="${uid}" UNION SELECT uid1 FROM friends WHERE uid2="${uid}") and uid!="${uid}"`, function(err, rows, fields){
+                if (rows.length==0){
+                    //Friends with everyone
+                } else {
+                    let index = Math.floor(Math.random() * rows.length); //Temporary matching
+                    let friend = rows[index];
+                    let results  = "";
+                    fs.readFile("Match.html", "utf8", function (err, data){
+                        results = data.replace('REPLACE_UID', friend.uid)
+                            .replace('REPLACE_PIC', friend.photoURL)
+                            .replace('REPLACE_UID2', friend.uid)
+                            .replace('REPLACE_NAME', friend.displayName);
+                        results = results.replace('REPLACE_UID3', friend.uid)
+                            .replace('REPLACE_UID_ME', uid)
+                            .replace('REPLACE_UID_FR', friend.uid);
+                        res.send(results);
+                    });
                 }
             });
         }
@@ -370,6 +489,7 @@ app.get(/^(.+)$/, function(req, res){
  });
 
  //The 404 Route (ALWAYS Keep this as the last route)
+
 app.get('*', function(req, res){
   res.send('what???', 404);
 });
@@ -379,4 +499,4 @@ var server = app.listen(8081, function () {
     var port = server.address().port
 
     console.log("Listening at http://%s:%s", host, port)
-})
+});
