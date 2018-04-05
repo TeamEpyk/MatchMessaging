@@ -8,11 +8,11 @@ var app = express();
 
 var config = require('./config')
 var dbOptions = {
- host: config.database.host,
- user: config.database.user,
- password: config.database.password,
- port: config.database.port,
- database: config.database.db
+    host: config.database.host,
+    user: config.database.user,
+    password: config.database.password,
+    port: config.database.port,
+    database: config.database.db
 }
 
 app.use(myConnection(mysql, dbOptions, 'pool'))
@@ -67,17 +67,14 @@ app.post('/get_messages', function(req, res){
             console.log(error);
         }
         conn.query(`SELECT * FROM messages WHERE (senderid="${u1}" AND receiverid="${u2}") OR (senderid="${u2}" AND receiverid="${u1}") ORDER BY time LIMIT 100`, function(err, rows, fields) {
-            fs.readFile("Message.html", "utf8", function (err, data){
-                console.log(rows, u2);
-                let results = '';
-                for (let i = 0; i<rows.length; i++){
-                    let cl = 'ms sentme';
-                    if (rows[i].senderid==u2) cl='ms sentfr';
-                    results += `<span class="${cl}">${rows[i].message}</span><br/>`
-                }
-                if (results=='') results = 'Nothing here yet!';
-                res.send(results);
-            });
+            let results = '';
+            for (let i = 0; i<rows.length; i++){
+                let cl = 'ms sentme';
+                if (rows[i].senderid==u2) cl='ms sentfr';
+                results += `<span class="${cl}">${rows[i].message}</span><br/>`
+            }
+            if (results=='') results = 'Nothing here yet!';
+            res.send(results);
         });
     });
 });
@@ -88,16 +85,14 @@ app.post('/get_online_friends', function(req, res){
         if (error){
             console.log(error);
         }
-        conn.query(`SELECT DISTINCT * FROM users WHERE uid IN (SELECT uid2 FROM friends WHERE uid1="${uid}" UNION SELECT uid1 FROM friends WHERE uid2="${uid}") and uid!="${uid}"`, function(err, rows, fields){
-            fs.readFile("Message.html", "utf8", function (err, data){
-                let results = '';
-                for (let i = 0; i<rows.length; i++){
-                    let cl = 'us sentfr';
-                    results += `<span style="overflow-x:scroll" class="${cl}">${rows[i].displayName}</span><br/>`
-                }
-                if (results=='') results = 'Nothing here yet!';
-                res.send(results);
-            });
+        //TODO Add online clause
+        conn.query(`SELECT DISTINCT * FROM users WHERE uid IN (SELECT uid2 FROM friends WHERE uid1="${uid}" and pending!=2 UNION SELECT uid1 FROM friends WHERE uid2="${uid}" and pending!=2) and uid!="${uid}"`, function(err, rows, fields){
+            let results = '';
+            for (let i = 0; i<rows.length; i++){
+                let cl = 'us sentfr';
+                results += `<span style="overflow-x:scroll" class="${cl}"><a href="/user/${rows[i].uid}">${rows[i].displayName}</a></span><br/>`
+            }
+            res.send(results);
         });
     });
 });
@@ -115,7 +110,7 @@ app.post('/user_login', function(req, res){
         var insert = `INSERT INTO users SET ?`;
         conn.query(insert, user, function(err, rows, fields) {
             if (err) {
-                //console.log(err);
+                console.log(err);
             } else {
                 console.log(`Successfully added ${user.uid} (${user.displayName}) to database.`);
             }
@@ -418,6 +413,14 @@ app.post('/get_match', function(req, res){
                             .replace('REPLACE_UID_ME', uid)
                             .replace('REPLACE_UID_FR', friend.uid);
                         res.send(results);
+                        items = {
+                            uid1: uid,
+                            uid2: friend.uid,
+                            pending: 3
+                        }
+                        conn.query(`INSERT INTO friends SET ?`, items, function(err, rows, fields){
+
+                        });
                     });
                 }
             });
