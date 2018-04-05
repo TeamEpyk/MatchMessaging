@@ -1,25 +1,26 @@
 <html>
 
-  <head>
-    <title>Chatroom</title>
-    <link rel="stylesheet" href="chatroom.css" />
-  </head>
-  
-  <body>
-    <h1>Chatroom</h2>
-    <form id="change-username">
-      <label for="field-username">Your username: </label>
-      <input name="username" id="field-username" />
-      <input type="submit" value="Change" />
-      <span id="username-submit-result"></span>
-    </form>
-    
-    <div id="messages"></div>
-    <div id="users"><ul></ul></div><br class="clearer" />
-    <form id="enter-message">
-      <input name="message" id="field-message" placeholder="Your message"/>
-      <input type="submit" value="Enter" />
-    </form>
-  </body>
-  
+    <head>
+        <title>Chatroom</title>
+        <link rel="stylesheet" href="Chat.css" />
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-auth.js"></script>
+        <script src="Chat.js"></script>
+    </head>
+
+    <body>
+        <h1>Chatroom</h2>
+
+        <div id="messages">
+            Placegolder
+        </div>
+        <div id="users"><ul></ul></div><br class="clearer" />
+        <input type="hidden" value="REPLACE_UID_ME" name="uid1"/>
+        <input type="hidden" value="REPLACE_UID_FR" name="uid2"/>
+        <input name="message" id="field-message" placeholder="Your message"/>
+        <button id="send">Send</button>
+
+    </body>
+
 </html>
