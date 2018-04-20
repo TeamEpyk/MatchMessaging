@@ -419,7 +419,11 @@ app.post('/get_match', function(req, res){
                             pending: 3
                         }
                         conn.query(`INSERT INTO friends SET ?`, items, function(err, rows, fields){
-
+                            if (err){
+                                //error
+                            } else {
+                                //Everything is fine
+                            }
                         });
                     });
                 }
@@ -490,8 +494,6 @@ app.get(/^(.+)$/, function(req, res){
     console.log('static file request : ' + url);
     res.sendFile( __dirname + url);
  });
-
- //The 404 Route (ALWAYS Keep this as the last route)
 
 app.get('*', function(req, res){
   res.send('what???', 404);
