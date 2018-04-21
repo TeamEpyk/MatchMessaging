@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var myConnection = require('express-myconnection');
 var expressValidator = require('express-validator')
 var mysql = require('mysql');
+const { Client } = require('pg');
 var fs = require('fs');
 var app = express();
 
@@ -14,6 +15,13 @@ var dbOptions = {
     port: config.database.port,
     database: config.database.db
 }
+
+const client = new Client({
+  connectionString: process.env.DATABASE_URL || 'postgres://jsvuwgkfjlvylg:3c5991a3ae8b2f095299639d4ec4e8d122416b75b45d75658280598f817de64e@ec2-54-221-192-231.compute-1.amazonaws.com:5432/d4tvln1s67tiqh',
+  //ssl: true,
+});
+
+client.connect();
 
 app.use(myConnection(mysql, dbOptions, 'pool'))
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -103,6 +111,18 @@ app.post('/user_login', function(req, res){
         displayName: req.sanitize('displayName').escape().trim(),
         photoURL: req.sanitize('photoURL').escape().trim()
     };
+    console.log(user);
+    client.query(`INSERT INTO users (uid, displayname, photourl, online) VALUES("${user.uid}", "${user.displayName}", "${user.photoURL}", now());`, (err, res1) => {
+        if (err){
+            console.log(err);
+            res.send('what???', 404);
+        } else {
+            console.log('Success!');
+            res.sendFile("/Index.html");
+        }
+    });
+    console.log("?");
+    /*
     req.getConnection(function(error, conn) {
         if (error){
             console.log(error);
@@ -120,6 +140,7 @@ app.post('/user_login', function(req, res){
         });
         res.send(`/Index.html`);
     })
+    */
 });
 
 app.post('/user_logout', function(req, res){

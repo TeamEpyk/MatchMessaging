@@ -25,8 +25,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     "photoURL": u.photoURL
                 }
             ).done(function (data) {
+                console.log(data);
                 window.location = data;
             }).fail(function(data){
+                console.log(data);
                 //Something else
             });
         } else {
