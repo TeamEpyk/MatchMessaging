@@ -65,7 +65,8 @@ app.post('/send_message', function(req, res){
 app.post('/get_messages', function(req, res){
     let u1 = req.sanitize('u1').escape().trim();
     let u2 = req.sanitize('u2').escape().trim();
-    conn.query(`SELECT * FROM messages WHERE (senderid='${u1}' AND receiverid='${u2}') OR (senderid='${u2}' AND receiverid='${u1}') ORDER BY time LIMIT 100`, function(err, rows, fields) {
+    client.query(`SELECT * FROM messages WHERE (senderid='${u1}' AND receiverid='${u2}') OR (senderid='${u2}' AND receiverid='${u1}') ORDER BY time LIMIT 100;`, (err, rows) => {
+        rows = rows.rows;
         let results = '';
         for (let i = 0; i<rows.length; i++){
             let cl = 'ms sentme';
@@ -80,6 +81,7 @@ app.post('/get_messages', function(req, res){
 app.post('/get_online_friends', function(req, res){
     let uid = req.sanitize('u1').escape().trim();
     client.query(`SELECT DISTINCT * FROM users WHERE uid IN (SELECT uid2 FROM friends WHERE uid1='${uid}' and pending!=2 UNION SELECT uid1 FROM friends WHERE uid2='${uid}' and pending!=2) and uid!='${uid}';`, (err, rows) => {
+        rows = rows.rows;
         let results = '';
         for (let i = 0; i<rows.length; i++){
             let cl = 'us sentfr';
@@ -136,6 +138,7 @@ app.post('/Search.html', function(req, res){
     let q = req.sanitize('query').escape().trim();
     let uid = req.sanitize('uid').escape().trim();
     client.query(`SELECT * FROM users WHERE uid!='${uid}' AND displayName LIKE '%${q}%';`, (err, rows) => {
+        rows = rows.rows;
         if (err){
             console.log("Here");
             console.log(err);
@@ -184,6 +187,7 @@ app.post('/add_friend', function(req, res){
         }
     });
     client.query(`SELECT * FROM friends WHERE (uid1='${u1}' or uid2='${u1}') and (uid1='${u2}' or uid2='${u2}');`, (err4, rows4) => {
+        rows4 = rows4.rows;
         if (err4){
             console.log(err4);
         } else {
@@ -199,11 +203,13 @@ app.post('/add_friend', function(req, res){
                     uid2: u2
                 }
                 client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${items.uid1}', '${items.uid2}', '1');`, (err, rows) => {
+                    rows = rows.rows;
                     if (err){
                         console.log(err);
                         res.send("Something went wrong...");
                     } else {
                         client.query(`SELECT * FROM users WHERE uid='${u1}';`, (err1, rows1) => {
+                            rows1 = rows1.rows;
                             if (err1){
                                 console.log(err1);
                                 res.send("Something went wrong...");
@@ -241,6 +247,7 @@ app.post('/confirm_friend', function(req, res){
         client.query(`SELECT * FROM friends WHERE id=${fid};`, (err1, rows1) => {
             client.query(`DELETE FROM notifications WHERE type=1 and otherId=${fid};`, (err2, rows2) => {
                 client.query(`SELECT * FROM users WHERE uid='${rows1[0].uid1}';`, (err4, rows4) => {
+                    rows4 = rows4.rows;
                     //type 2 for accepted friend request
                     items = {
                         uid: rows4[0].uid,
@@ -264,6 +271,7 @@ app.post('/decline_friend', function(req, res){
         client.query(`SELECT * FROM friends WHERE id=${fid};`, (err1, rows1) => {
             client.query(`DELETE FROM notifications WHERE type=1 and otherId=${fid};`, (err2, rows2) => {
                 client.query(`SELECT * FROM users WHERE uid='${rows1[0].uid1}';`, (err4, rows4) => {
+                    rows4 = rows4.rows;
                     items = {
                         uid: rows4[0].uid
                     }
@@ -283,6 +291,7 @@ app.post('/get_notifications', function(req, res){
         messages: []
     };
     client.query(`SELECT DISTINCT * FROM friends RIGHT JOIN (SELECT * from notifications WHERE type=1 and notifications.uid='${uid}') as n ON friends.id=n.otherId;`, (err, rows) => {
+        rows = rows.rows;
         result.friends.push(rows);
         let html = "";
         let template = "";
@@ -319,6 +328,7 @@ app.post('/friend_status', function(req, res){
         res.send('friend');
     } else {
         client.query(`SELECT * FROM friends WHERE (uid1='${u1}' or uid2='${u1}') and (uid1='${u2}' or uid2='${u2}');`, (err, rows) => {
+            rows = rows.rows;
             if (err){
                 console.log(err);
                 res.send('error');
@@ -351,11 +361,13 @@ app.post('/get_match', function(req, res){
         //Update last active
     });
     client.query(`SELECT DISTINCT * FROM users WHERE uid NOT IN (SELECT uid2 FROM friends WHERE uid1='${uid}' UNION SELECT uid1 FROM friends WHERE uid2='${uid}') and uid!='${uid}';`, (err, rows) => {
+        rows = rows.rows;
         if (rows.length==0){
             //Friends with everyone
+            res.send("You are friends with every other user!");
         } else {
             let index = Math.floor(Math.random() * rows.length); //Temporary matching
-            let friend = rows[index];
+            let friend = [index];
             let results  = "";
             fs.readFile("Match.html", "utf8", function (err, data){
                 results = data.replace('REPLACE_UID', friend.uid)
@@ -371,7 +383,7 @@ app.post('/get_match', function(req, res){
                     uid2: friend.uid,
                     pending: 3
                 }
-                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${items.uid1}', '${items.uid2}', '${items.pending}');`, items, function(err, rows, fields){
+                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${items.uid1}', '${items.uid2}', '${items.pending}');`, items, function(err, rows){
                     if (err){
                         //error
                     } else {
@@ -388,6 +400,7 @@ app.get(/^\/user(.+)$/, function(req, res){
     if (url.split('.').length==1){
         let uid = url.substring(1);
         client.query(`SELECT * FROM users WHERE uid='${uid}';`, (err, rows) => {
+            rows = rows.rows;
             if (err){
                 console.log(err);
                 res.redirect("*");
