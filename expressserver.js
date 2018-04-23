@@ -52,9 +52,10 @@ app.post('/send_message', function(req, res){
         receiverid: r,
         message: m
     }
-    let insert = `INSERT INTO messages (senderid, receiverid, message) VALUES('${info.senderid}', '${info.receiverid}', ${info.message});`;
+    let insert = `INSERT INTO messages (senderid, receiverid, message) VALUES('${info.senderid}', '${info.receiverid}', '${info.message}');`;
     client.query(insert, (err, rows) => {
         if (err) {
+            console.log(err);
             res.send('failure');
         } else {
             res.send('success');
@@ -85,7 +86,7 @@ app.post('/get_online_friends', function(req, res){
         let results = '';
         for (let i = 0; i<rows.length; i++){
             let cl = 'us sentfr';
-            results += `<span style="overflow-x:scroll" class="${cl}"><a href="/user/${rows[i].uid}">${rows[i].displayName}</a></span><br/>`
+            results += `<span style="overflow-x:scroll" class="${cl}"><a href="/user/${rows[i].uid}">${rows[i].displayname}</a></span><br/>`
         }
         res.send(results);
     });
@@ -198,34 +199,31 @@ app.post('/add_friend', function(req, res){
                     res.send("You are already friends with this user.")
                 }
             } else {
-                items = {
-                    uid1: u1,
-                    uid2: u2
-                }
-                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${items.uid1}', '${items.uid2}', '1');`, (err, rows) => {
+                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${u1}', '${u2}', 1) RETURNING id;`, (err, rows) => {
                     rows = rows.rows;
                     if (err){
                         console.log(err);
-                        res.send("Something went wrong...");
+                        res.send("Something1 went wrong...");
                     } else {
                         client.query(`SELECT * FROM users WHERE uid='${u1}';`, (err1, rows1) => {
                             rows1 = rows1.rows;
                             if (err1){
                                 console.log(err1);
-                                res.send("Something went wrong...");
+                                res.send("Something2 went wrong...");
                             } else {
-                                let name = rows1[0].displayName;
+                                let name = rows1[0].displayname;
                                 //type 1 for friend request
                                 items = {
-                                    otherId: rows.insertId,
+                                    otherId: rows[0].id,
                                     uid: u2,
                                     message: `${name} has requested to be your friend!`,
                                     type: 1
                                 }
-                                client.query(`INSERT INTO notifications (otherId, uid, message, type) VALUES('${items.otherId}', '${items.uid}', '${items.message}', '${items.type}');`, (err2, rows2) => {
+                                let q = `INSERT INTO notifications (otherid, uid, message, type) VALUES(${items.otherId}, '${u2}', '${items.message}', ${items.type});`;
+                                client.query(q, (err2, rows2) => {
                                     if (err2){
                                         console.log(err2);
-                                        res.send("Something went wrong...");
+                                        res.send("Something3 went wrong...");
                                     } else {
                                         fs.readFile("Redirect.html", "utf8", function (err3, data){
                                             res.send(data.replace("REPLACE_ME", `/user/${u2}`));
@@ -243,8 +241,10 @@ app.post('/add_friend', function(req, res){
 
 app.post('/confirm_friend', function(req, res){
     let fid = req.sanitize('secret1').escape().trim();
-    client.query(`UPDATE friends SET pending=0 WHERE id='${fid}';`, (err, rows) => {
+    console.log(fid);
+    client.query(`UPDATE friends SET pending=0 WHERE id=${fid};`, (err, rows) => {
         client.query(`SELECT * FROM friends WHERE id=${fid};`, (err1, rows1) => {
+            rows1 = rows1.rows;
             client.query(`DELETE FROM notifications WHERE type=1 and otherId=${fid};`, (err2, rows2) => {
                 client.query(`SELECT * FROM users WHERE uid='${rows1[0].uid1}';`, (err4, rows4) => {
                     rows4 = rows4.rows;
@@ -306,8 +306,8 @@ app.post('/get_notifications', function(req, res){
                     html += template.replace('MESSAGE_REPLACE', result.friends[0][i].message)
                         .replace('ACTION_REPLACE', 'confirm_friend')
                         .replace('ACTION_REPLACE2', 'decline_friend')
-                        .replace('ID_REPLACE', result.friends[0][i].otherId)
-                        .replace('ID_REPLACE', result.friends[0][i].otherId)
+                        .replace('ID_REPLACE', result.friends[0][i].otherid)
+                        .replace('ID_REPLACE', result.friends[0][i].otherid)
                         .replace('USER_REPLACE', `/user/${result.friends[0][i].uid1}`);
                 }
             }
@@ -367,13 +367,13 @@ app.post('/get_match', function(req, res){
             res.send("You are friends with every other user!");
         } else {
             let index = Math.floor(Math.random() * rows.length); //Temporary matching
-            let friend = [index];
+            let friend = rows[index];
             let results  = "";
             fs.readFile("Match.html", "utf8", function (err, data){
                 results = data.replace('REPLACE_UID', friend.uid)
-                    .replace('REPLACE_PIC', friend.photoURL)
+                    .replace('REPLACE_PIC', friend.photourl)
                     .replace('REPLACE_UID2', friend.uid)
-                    .replace('REPLACE_NAME', friend.displayName);
+                    .replace('REPLACE_NAME', friend.displayname);
                 results = results.replace('REPLACE_UID3', friend.uid)
                     .replace('REPLACE_UID_ME', uid)
                     .replace('REPLACE_UID_FR', friend.uid);
@@ -421,7 +421,7 @@ app.get(/^\/user(.+)$/, function(req, res){
                                 //Handle Error
                             } else {
                                 index1 += find1.length;
-                                profilePage = profilePage.substring(0, index1) + `src="${rows[0].photoURL}"` + profilePage.substring(index1);
+                                profilePage = profilePage.substring(0, index1) + `src="${rows[0].photourl}"` + profilePage.substring(index1);
                             }
                             let find2 = '<h2 id="displayname">';
                             let index2 = profilePage.indexOf(find2);
@@ -429,7 +429,7 @@ app.get(/^\/user(.+)$/, function(req, res){
                                 //Handle Error
                             } else {
                                 index2 += find2.length;
-                                profilePage = profilePage.substring(0, index2) + `${rows[0].displayName}` + profilePage.substring(index2);
+                                profilePage = profilePage.substring(0, index2) + `${rows[0].displayname}` + profilePage.substring(index2);
                             }
                             res.set('Content-Type', 'text/html');
                             res.send(profilePage);
