@@ -1,24 +1,65 @@
 html, body {
   height:100%;
 }
+/* Feel free to mess around with the colors.
+I'm still not sure what'd be good... I just thought "navy" was too dark for a bg.*/
 body {
-  background-color: navy;
+  background-color: #ECE2D0; /* "almond": a light tan color */
+}
+
+#header{
+  background-color: #7B3F00; /* "chocolate": a dark brown color (darker than html chocolate) */
+  display:flex;
+  align-items:baseline;
+}
+
+/* colors go here for easy editing. */
+#layer1, #profileheader, #messages {
+  background-color: powderblue;
+}
+
+#users{
+  background-color: #8bd1da; /* a couple shades darker than powderblue (because I removed scrollbars and outlines) */
+}
+
+/* Profile page */
+#profileheader{
+  display:flex;
+  align-items:baseline;
+}
+
+#profilepic {
+  padding-top:25px;
+  width: 168;
+  height: 168;
+}
+#actions {
+  display:flex;
+  flex-direction: column;
+}
+
+/* Login (and registration) page */
+#loginpage {
   display:flex;
   align-items:center;
-  color: white;
 }
 #layer1 {
-  background-color: skyblue;
   padding: 10px;
-  color: white;
   text-align: center;
 }
 #layer2 {
   background-color: white;
   padding: 10px;
-  color: white;
   text-align: center;
 }
+
+/* Chat page */
+#messages, #users{
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* other */
 #username {
   top: 5%;
 }

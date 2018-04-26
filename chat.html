@@ -1,6 +1,6 @@
 <html>
-
     <head>
+      <link rel="stylesheet" href="LoginStyle.css">
         <title>Chatroom</title>
         <link rel="stylesheet" href="Chat.css" />
         <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -10,10 +10,15 @@
     </head>
 
     <body>
+        <ul id=header>
+          <button id="logout">Logout</button>
+          <br>
+          <table border="1" id="notifications"></table>
+        </ul>
         <h1>Chatroom</h2>
 
         <div id="messages">
-            Placegolder
+            Placeholder
         </div>
         <div id="users"><ul></ul></div><br class="clearer" />
         <input type="hidden" value="REPLACE_UID_ME" name="uid1"/>
