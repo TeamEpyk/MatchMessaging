@@ -36,10 +36,18 @@ app.get('/', function (req, res) {
 app.post('/Chat.html', function(req, res){
     let u1 = req.sanitize('uid1').escape().trim();
     let u2 = req.sanitize('uid2').escape().trim();
-    fs.readFile("Chat.html", "utf8", function (err, data){
-        let replace = data.replace('REPLACE_UID_ME', u1)
-            .replace('REPLACE_UID_FR', u2);
-            res.send(replace);
+    client.query(`SELECT * FROM users WHERE uid='${u2}';`, (err, rows) => {
+        rows = rows.rows;
+        if (rows.length==0){
+            res.send("Something went wrong...");
+        } else {
+            fs.readFile("Chat.html", "utf8", function (err, data){
+                let replace = data.replace('REPLACE_UID_ME', u1)
+                    .replace('REPLACE_UID_FR', u2)
+                    .replace('REPLACE_FR', `<a href="/users/${rows[0].uid}">${rows[0].displayname}</a>`);
+                res.send(replace);
+            });
+        }
     });
 });
 
@@ -52,7 +60,7 @@ app.post('/send_message', function(req, res){
         receiverid: r,
         message: m
     }
-    let insert = `INSERT INTO messages (senderid, receiverid, message) VALUES('${info.senderid}', '${info.receiverid}', '${info.message}');`;
+    let insert = `INSERT INTO messages (senderid, receiverid, message, time) VALUES('${info.senderid}', '${info.receiverid}', '${info.message}', now());`;
     client.query(insert, (err, rows) => {
         if (err) {
             console.log(err);
@@ -86,7 +94,13 @@ app.post('/get_online_friends', function(req, res){
         let results = '';
         for (let i = 0; i<rows.length; i++){
             let cl = 'us sentfr';
-            results += `<span style="overflow-x:scroll" class="${cl}"><a href="/user/${rows[i].uid}">${rows[i].displayname}</a></span><br/>`
+            results += `<span class="${cl}">
+                            <form action="/Chat.html" method="post">
+                                <input type="hidden" value="${uid}" name="uid1" id="uid1"/>
+                                <input type="hidden" value="${rows[i].uid}" name="uid2" id="uid2"/>
+                                <input type="submit" value="${rows[i].displayname}"/>
+                            </form>
+                        </span><br/>`;
         }
         res.send(results);
     });
@@ -363,8 +377,17 @@ app.post('/get_match', function(req, res){
     client.query(`SELECT DISTINCT * FROM users WHERE uid NOT IN (SELECT uid2 FROM friends WHERE uid1='${uid}' UNION SELECT uid1 FROM friends WHERE uid2='${uid}') and uid!='${uid}';`, (err, rows) => {
         rows = rows.rows;
         if (rows.length==0){
-            //Friends with everyone
-            res.send("You are friends with every other user!");
+            client.query(`SELECT * FROM friends WHERE uid1='${uid}' OR uid2='${uid}' LIMIT 1;`, (err, rows2) => {
+                rows2 = rows2.rows;
+                u = rows2[0].uid1;
+                if (rows2[0].uid1==uid) u = rows2[0].uid2;
+                res.send(`<span><form id="fuck" action="/Chat.html" method="post">
+                                <input type="hidden" value="${uid}" name="uid1" id="uid1" form="fuck"/>
+                                <input type="hidden" value="${u}" name="uid2" id="uid2" form="fuck"/>
+                                You have been matched with every other user!<br/>
+                                <input type="submit" value="Try sending one a message!" form="fuck"/>
+                            </form></span>`);
+            });
         } else {
             let index = Math.floor(Math.random() * rows.length); //Temporary matching
             let friend = rows[index];
@@ -378,12 +401,7 @@ app.post('/get_match', function(req, res){
                     .replace('REPLACE_UID_ME', uid)
                     .replace('REPLACE_UID_FR', friend.uid);
                 res.send(results);
-                items = {
-                    uid1: uid,
-                    uid2: friend.uid,
-                    pending: 3
-                }
-                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${items.uid1}', '${items.uid2}', '${items.pending}');`, items, function(err, rows){
+                client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${uid}', '${friend.uid}', ${3});`, function(err, rows){
                     if (err){
                         //error
                     } else {
@@ -398,7 +416,7 @@ app.post('/get_match', function(req, res){
 app.get(/^\/user(.+)$/, function(req, res){
     let url = req.params[0];
     if (url.split('.').length==1){
-        let uid = url.substring(1);
+        let uid = url.substring(2);
         client.query(`SELECT * FROM users WHERE uid='${uid}';`, (err, rows) => {
             rows = rows.rows;
             if (err){

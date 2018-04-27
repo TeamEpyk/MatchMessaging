@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     function getMessages(){
         let u1 = firebase.auth().currentUser.uid;
-        let check = $("input[name='uid2']").val();
+        let check = $("input[name='suid2']").val();
         $.post('/get_messages',
             {
                 "u1": u1,
@@ -48,9 +48,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
         var message = $("#field-message").val();
         if (message.length>0 && message.length < 2000){
             let u1 = firebase.auth().currentUser.uid;
-            let check = $("input[name='uid2']").val();
+            let check = $("input[name='suid2']").val();
             if (u1==check){
-                check = $("input[name='uid1']").val();
+                check = $("input[name='suid1']").val();
             }
             if (check.indexOf('_')>-1){
                 window.location = "Index.html";
