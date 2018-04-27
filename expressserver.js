@@ -416,7 +416,8 @@ app.post('/get_match', function(req, res){
 app.get(/^\/user(.+)$/, function(req, res){
     let url = req.params[0];
     if (url.split('.').length==1){
-        let uid = url.substring(2);
+        let uid = url.substring(url.indexOf("/")+1);
+        if (uid.endsWith("?")) uid = uid.slice(0, -1);
         client.query(`SELECT * FROM users WHERE uid='${uid}';`, (err, rows) => {
             rows = rows.rows;
             if (err){
@@ -457,7 +458,8 @@ app.get(/^\/user(.+)$/, function(req, res){
             }
         });
     } else {
-        res.sendFile( __dirname + url);
+        dirname = __dirname;
+        res.sendFile(dirname + url.substring(url.indexOf("/")));
     }
 });
 
@@ -466,7 +468,7 @@ app.get(/^(.+)$/, function(req, res){
     if (url.split('.').length==1){
         url+=".html";
     }
-    console.log('static file request : ' + url);
+    console.log('static file request : '+__dirname + url);
     res.sendFile( __dirname + url);
  });
 

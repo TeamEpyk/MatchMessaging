@@ -24,20 +24,26 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 $.post('/friend_status',
                     {
                         "uid1": user.uid,
-                        "uid2": window.location.pathname.substring(6)
+                        "uid2": window.location.pathname.substring(7)
                     }
                 ).done(function (data) {
                     if (data=='friend'){
                         $("#add").hide();
+                        $("#mess").hide();
                     } else if (data=='nofriend'){
                         $("#uid1").val(user.uid);
-                        $("#uid2").val(window.location.pathname.substring(6));
+                        $("#uid2").val(window.location.pathname.substring(7));
+                        $("#suid1").val(user.uid);
+                        $("#suid2").val(window.location.pathname.substring(7));
                     } else if (data=='pending'){
                         $("#add").prop('disabled', true);
                         $("#add").val("Pending");
+                        $("#suid1").val(user.uid);
+                        $("#suid2").val(window.location.pathname.substring(7));
                     }
                 }).fail(function(data){
                     $("#add").hide();
+                    $("#mess").hide();
                 });
             }
         } else {
