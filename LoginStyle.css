@@ -1,5 +1,6 @@
 html, body {
   height:100%;
+  width:100%;
 }
 /* Feel free to mess around with the colors.
 I'm still not sure what'd be good... I just thought "navy" was too dark for a bg.*/
@@ -57,6 +58,15 @@ body {
 #messages, #users{
   border: none !important;
   overflow: hidden !important;
+}
+
+/* Index page */
+#layer3 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  /* https://stackoverflow.com/questions/19461521/how-to-center-an-element-horizontally-and-vertically */
 }
 
 /* other */
