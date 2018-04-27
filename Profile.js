@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("User is signed in.");
-            if (window.location.pathname.substring(6)==user.uid){
+            let userid = window.location.pathname;
+            userid = userid.substring(userid.lastIndexOf("/")+1);
+            if (userid==user.uid){
                 $("#add").hide();
                 $.post('/get_notifications',
                     {
@@ -24,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 $.post('/friend_status',
                     {
                         "uid1": user.uid,
-                        "uid2": window.location.pathname.substring(7)
+                        "uid2": userid
                     }
                 ).done(function (data) {
                     if (data=='friend'){
@@ -32,14 +34,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
                         $("#mess").hide();
                     } else if (data=='nofriend'){
                         $("#uid1").val(user.uid);
-                        $("#uid2").val(window.location.pathname.substring(7));
+                        $("#uid2").val(userid);
                         $("#suid1").val(user.uid);
-                        $("#suid2").val(window.location.pathname.substring(7));
+                        $("#suid2").val(userid);
                     } else if (data=='pending'){
                         $("#add").prop('disabled', true);
                         $("#add").val("Pending");
                         $("#suid1").val(user.uid);
-                        $("#suid2").val(window.location.pathname.substring(7));
+                        $("#suid2").val(userid);
                     }
                 }).fail(function(data){
                     $("#add").hide();
