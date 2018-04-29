@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("User is signed in.");
+            $("#profile a").prop('href', '/user/'+firebase.auth().currentUser.uid);
+            $("#puid1").val(firebase.auth().currentUser.uid);
+            $("#puid2").val(firebase.auth().currentUser.uid);
         } else {
             console.log("No user is signed in.");
             window.location = "Login.html";
@@ -26,4 +29,32 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }).fail(function(data){
         });
     });
+
+    $("#logout").click(function(){
+        logout();
+    });
+
+    $("#message").click(function(){
+        $("#chat").submit();
+    });
+
+    function logout(){
+        var u = firebase.auth().currentUser;
+        $.post('/user_logout',
+            {
+                "uid": u.uid
+            }
+        ).done(function (data) {
+            window.location = data;
+        }).fail(function(data){
+            //Something else
+        });
+        firebase.auth().signOut()
+        .then(function() {
+        // Sign-out successful.
+        })
+        .catch(function(error) {
+        // An error happened
+        });
+    }
 });

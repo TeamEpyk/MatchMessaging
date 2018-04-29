@@ -4,13 +4,23 @@
     <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-auth.js"></script>
     <script src="Profile.js"></script>
+    <title>My Profile</title>
 </head>
 <body>
-  <ul id=header>
-    <button id="logout">Logout</button>
-    <br>
-    <table border="1" id="notifications"></table>
-  </ul>
+    <nav id="navigation">
+        <ul class="clearfix">
+            <li class="focus"><a href="Index.html">Home</a></li>
+            <li id="profile"><a href="">My Profile</a></li>
+            <form action="/Chat.html" method="post" id="chat">
+                <input type="hidden" value="" name="uid1" id="puid1"/>
+                <input type="hidden" value="" name="uid2" id="puid2"/>
+            </form>
+            <li id="message"><span>Messages<span></li>
+            <li id="logout"><span href="">Logout</span></li>
+        </ul>
+    </nav>
+      <link rel="stylesheet" href="format.css" />
+      
     <!-- actual profile header (non-static image and username) -->
     <ul id=profileheader>
       <image id="profilepic" width="168" height="168"/>

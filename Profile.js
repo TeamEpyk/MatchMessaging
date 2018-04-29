@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
             console.log("User is signed in.");
+            $("#profile a").prop('href', '/user/'+firebase.auth().currentUser.uid);
+            $("#puid1").val(firebase.auth().currentUser.uid);
+            $("#puid2").val(firebase.auth().currentUser.uid);
             let userid = window.location.pathname;
             userid = userid.substring(userid.lastIndexOf("/")+1);
             if (userid==user.uid){
@@ -56,6 +59,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     $("#logout").click(function(){
         logout();
+    });
+
+    $("#message").click(function(){
+        $("#chat").submit();
     });
 
     function logout(){

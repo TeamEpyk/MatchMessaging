@@ -112,6 +112,7 @@ app.post('/user_login', function(req, res){
         displayName: req.sanitize('displayName').escape().trim(),
         photoURL: req.sanitize('photoURL').escape().trim()
     };
+    //TODO: Get Interests String from req
     client.query(`INSERT INTO users (uid, displayname, photourl, online) VALUES('${user.uid}', '${user.displayName}', '${user.photoURL}', now());`, (err, res1) => {
         if (err){
             if (err.detail.indexOf('already exists')!=-1){
@@ -122,8 +123,7 @@ app.post('/user_login', function(req, res){
                 res.send('what???', 404);
             }
         } else {
-            console.log('Success!');
-            res.send("/Index.html");
+            res.send(`/user/${user.uid}`);
         }
     });
     client.query(`UPDATE users SET online=now() WHERE uid='${user.uid}';`, (err, res1) => {

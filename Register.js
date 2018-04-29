@@ -35,6 +35,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 console.log(errorMessage);
             }).then(function(result){
                 let user = firebase.auth().currentUser;
+                let is = $(".i");
+                let istring = "";
+                for (let i = 0; i<is.length; i++){
+                    istring += (is[i].classList.contains('active')|0).toString();
+                }
                 user.updateProfile({
                     displayName: un,
                     photoURL: 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'
@@ -44,7 +49,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
                         {
                             "uid": u.uid,
                             "displayName": u.displayName,
-                            "photoURL": u.photoURL
+                            "photoURL": u.photoURL,
+                            "interests": istring
                         }
                     ).done(function (data) {
                         window.location = `/user/${u.uid}`;
