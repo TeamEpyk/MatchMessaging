@@ -5,14 +5,14 @@ html, body {
 /* Feel free to mess around with the colors.
 I'm still not sure what'd be good... I just thought "navy" was too dark for a bg.*/
 body {
-  background-color: #ECE2D0; /* "almond": a light tan color */
+  background-color: #eeece7;
 }
 
-#header{
-  background-color: #7B3F00; /* "chocolate": a dark brown color (darker than html chocolate) */
+/*#header{ (Commented out: a different header was added through format.css)
+  background-color: #7B3F00;
   display:flex;
   align-items:baseline;
-}
+}*/
 
 /* colors go here for easy editing. */
 #layer1, #profileheader, #messages {
@@ -56,7 +56,7 @@ body {
 
 /* Chat page */
 #messages, #users{
-  border: none !important; 
+  border: none !important;
 }
 
 /* Index page */
