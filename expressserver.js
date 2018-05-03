@@ -209,7 +209,7 @@ app.post('/add_friend', function(req, res){
             if (rows4.length>0){ //This should never happen
                 if (rows4[0].pending==1 || rows4[0].pending==2){
                     res.send("Friend request pending.");
-                } else {
+                } else if (rows4[0].pending==0) {
                     res.send("You are already friends with this user.")
                 }
             } else {
