@@ -29,7 +29,6 @@ footer, header, hgroup, menu, nav, section { display: block; }
 /* 正文基本设定, 删除引用语句 */
 body {
 	font: 13px/1.5 "Nanum Gothic", Dotum, Sans-Serief;
-	color: #323232;
 	}
 	/* 设置英文 */ /*changed to 16px to fit the rest of the site*/
 	.lang-en, :lang(en) { font: 16px/1.5 "Helvetica Neue", Helvetica, Verdana, Arial, Sans-Serief; }
