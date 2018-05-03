@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     });
 
     function getMessages(){
+        $("body").css('background-color', '#eeece7');
         let u1 = firebase.auth().currentUser.uid;
         let check = $("input[name='suid2']").val();
         $.post('/get_messages',
