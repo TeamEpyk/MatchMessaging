@@ -206,13 +206,13 @@ app.post('/add_friend', function(req, res){
         if (err4){
             console.log(err4);
         } else {
-            if (rows4.length>0){ //This should never happen
+            if (rows4.length>0 && rows4[0].pending!=3){ 
                 if (rows4[0].pending==1 || rows4[0].pending==2){
                     res.send("Friend request pending.");
                 } else if (rows4[0].pending==0) {
                     res.send("You are already friends with this user.")
                 }
-            } else {
+            } else if (rows4.length==0 || rows4[0].pending==3) {
                 client.query(`INSERT INTO friends (uid1, uid2, pending) VALUES('${u1}', '${u2}', 1) RETURNING id;`, (err, rows) => {
                     rows = rows.rows;
                     if (err){
